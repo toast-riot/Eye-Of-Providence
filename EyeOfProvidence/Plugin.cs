@@ -1,21 +1,6 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using BepInEx;
 using HarmonyLib;
-using System.IO;
-using System.Reflection;
-using JetBrains.Annotations;
-using System.Security.Cryptography.X509Certificates;
-using System.Linq;
-using System.Collections.Generic;
-using UnityEngine.AddressableAssets;
-using System.Security.Cryptography;
-using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.ResourceManagement.ResourceLocations;
-using System.Collections;
-using System.Net;
-using UnityEngine.Audio;
-using BepInEx.Bootstrap;
 using PluginConfig;
 using UnityEngine.Rendering;
 

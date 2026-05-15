@@ -1,15 +1,10 @@
-﻿using PluginConfig.API.Decorators;
-using PluginConfig.API.Fields;
+﻿using PluginConfig.API.Fields;
 using PluginConfig.API;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EyeOfProvidence;
 using UnityEngine;
-using UnityEngine.UIElements;
 using FloatField = PluginConfig.API.Fields.FloatField;
 
 namespace EyeOfProvidence
