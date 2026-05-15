@@ -4,12 +4,10 @@ using HarmonyLib;
 using PluginConfig;
 using UnityEngine.Rendering;
 
-namespace EyeOfProvidence
-{
+namespace EyeOfProvidence {
     [BepInPlugin(PluginInfo.GUID, PluginInfo.Name, PluginInfo.Version)]
     [BepInDependency(PluginConfiguratorController.PLUGIN_GUID)]
-    public class Plugin : BaseUnityPlugin
-    {
+    public class Plugin : BaseUnityPlugin {
 
         /*public static TrashCan<GameObject> spawner { get; private set; } = new TrashCan<GameObject>("block_main");
         public static UKAsset<GameObject> UK_Boom { get; private set; } = new UKAsset<GameObject>("Assets/Prefabs/Attacks and Projectiles/Coin.prefab");
@@ -28,15 +26,10 @@ namespace EyeOfProvidence
         static Texture texst;
         public static bool UltraFOV = true;
         public CommandBuffer bloodOilCB;
-        public void Awake()
-        {
-
+        public void Awake() {
         }
 
-        public void Start()
-        {
-            Debug.Log("Reddit, I think I know what we're gonna do today!");
-
+        public void Start() {
             AssetHandler.LoadBundle("ultra_nato");
 
             globePref = AssetHandler.LoadAsset<GameObject>("GlobeCam");
@@ -44,46 +37,31 @@ namespace EyeOfProvidence
             //texst = AssetHandler.LoadAsset<Texture>("Gun Color Small");
             harmony.PatchAll(typeof(XboxGamePass));
             ConfigManager.Setup();
-
         }
 
-        public void Update()
-        {
-            if (UltraFOV)
-            {
-                if (CameraController.Instance)
-                {
-                    //Debug.LogError(CameraController.Instance.cam.targetTexture.name);
-                    if (CameraController.Instance.cam)
-                    {
-                        if (!globe)
-                        {
-                            SetupGlobe();
-                        }
+        public void Update() {
+            if (UltraFOV) {
+                //Debug.LogError(CameraController.Instance.cam.targetTexture.name);
+                if (CameraController.Instance?.cam) {
+                    if (!globe) {
+                        SetupGlobe();
                     }
                 }
             }
-            else
-            {
-                if (globe)
-                {
-                    if (CameraController.Instance.cam.targetTexture)
-                    {
-                        //Debug.LogError(CameraController.Instance.cam.targetTexture.name);
-                    }
-                    ClearGlobe();
-                }
+            else if (globe) {
+                // if (CameraController.Instance?.cam.targetTexture)
+                // {
+                //     Debug.LogError(CameraController.Instance.cam.targetTexture.name);
+                // }
+                ClearGlobe();
             }
 
 
-            if (globe)
-            {
+            if (globe) {
                 globe.transform.position = CameraController.Instance.gameObject.transform.position;
                 globe.transform.rotation = CameraController.Instance.gameObject.transform.rotation;
-                if (tex)
-                {
-                    if (post.mainCam.targetTexture != tex)
-                    {
+                if (tex) {
+                    if (post.mainCam.targetTexture != tex) {
                         post.mainCam.targetTexture = tex;
                     }
                 }
@@ -91,16 +69,14 @@ namespace EyeOfProvidence
             ConfigManager.Update();
         }
 
-        public void SetupGlobe()
-        {
+        public void SetupGlobe() {
             //Debug.LogError("Initializing Globe");
             XboxGamePass.reinitTex = true;
             PostProcessV2_Handler.Instance.reinitializeTextures = true;
             PostProcessV2_Handler.Instance.SetupRTs();
 
-            globe = Instantiate<GameObject>(globePref, NewMovement.instance.transform.position, Quaternion.identity);
-            for (int i = 0; i < cams.Length; i++)
-            {
+            globe = Instantiate<GameObject>(globePref, NewMovement.Instance.transform.position, Quaternion.identity);
+            for (int i = 0; i < cams.Length; i++) {
                 cams[i] = globe.transform.GetChild(i).GetComponent<Camera>();
                 cams[i].nearClipPlane = CameraController.Instance.cam.nearClipPlane;
                 cams[i].farClipPlane = CameraController.Instance.cam.farClipPlane;
@@ -120,18 +96,15 @@ namespace EyeOfProvidence
             post.cams = cams;
         }
 
-        public void ClearGlobe()
-        {
+        public void ClearGlobe() {
             //Debug.LogError("Clearing Globe");
-            if (globe)
-            {
+            if (globe) {
                 GameObject.Destroy(globe);
             }
             globe = null;
 
 
-            for (int i = 0; i < cams.Length; i++)
-            {
+            for (int i = 0; i < cams.Length; i++) {
                 cams[i] = null;
             }
 
@@ -142,29 +115,25 @@ namespace EyeOfProvidence
             PostProcessV2_Handler.Instance.reinitializeTextures = true;
             PostProcessV2_Handler.Instance.SetupRTs();
 
-            if (CameraController.Instance.gameObject.TryGetComponent<PostProssesingBaby>(out PostProssesingBaby bab))
-            {
+            if (CameraController.Instance.gameObject.TryGetComponent<PostProssesingBaby>(out PostProssesingBaby bab)) {
                 GameObject.Destroy(bab);
             }
         }
 
 
         [HarmonyPatch]
-        public static class XboxGamePass
-        {
+        public static class XboxGamePass {
             public static bool reinitTex = UltraFOV;
 
             [HarmonyPostfix]
             [HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.OnPreRenderCallback))]
-            public static void FUUUUUUUU(PostProcessV2_Handler __instance)
-            {
+            public static void FUUUUUUUU(PostProcessV2_Handler __instance) {
 
             }
 
             [HarmonyPostfix]
             [HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.HeatWaves))]
-            public static void skinitsundermyskinoffpeelitoffskinoffpeeloffskin(PostProcessV2_Handler __instance)
-            {
+            public static void skinitsundermyskinoffpeelitoffskinoffpeeloffskin(PostProcessV2_Handler __instance) {
                 // I know what needs to be done. Materials like heatwave, blood, etc. use the player camera matrix as a global parameter
                 // So if I want to properly render the scene, I would need to constantly cycle the global matrix between the six cameras and cordinate that every frame
                 // It seems doable* with command buffers, but I'll leave it for future me to solve.
@@ -174,24 +143,19 @@ namespace EyeOfProvidence
             }
             [HarmonyPostfix]
             [HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.ReleaseTextures))]
-            public static void DisbandTrollLegion(PostProcessV2_Handler __instance)
-            {
-                if (tex)
-                {
+            public static void DisbandTrollLegion(PostProcessV2_Handler __instance) {
+                if (tex) {
                     tex.Release();
                 }
-                if (tex)
-                {
+                if (tex) {
                     UnityEngine.Object.Destroy(tex);
                 }
                 tex = null;
             }
             [HarmonyPostfix]
             [HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.ChangeCamera))]
-            public static void remember(PostProcessV2_Handler __instance)
-            {
-                if (UltraFOV)
-                {
+            public static void remember(PostProcessV2_Handler __instance) {
+                if (UltraFOV) {
                     //Debug.LogError("*burps covertly*");
                     reinitTex = true;
                 }
@@ -199,8 +163,7 @@ namespace EyeOfProvidence
 
             [HarmonyPostfix]
             [HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.SetupRTs))]
-            public static void rage(PostProcessV2_Handler __instance)
-            {
+            public static void rage(PostProcessV2_Handler __instance) {
                 //return;
                 /*if (Plugin.tex)
                 {
@@ -208,8 +171,7 @@ namespace EyeOfProvidence
                     __instance.postProcessV2_VSRM.SetTexture("_MainTex", texst);
                 }*/
                 //tex = (RenderTexture)texst;
-                if (!tex)
-                {
+                if (!tex) {
                     /*tex = new RenderTexture(__instance.width, __instance.height, 0, RenderTextureFormat.ARGB32)
                     {
                         name = "Main",
@@ -224,8 +186,7 @@ namespace EyeOfProvidence
                     tex.antiAliasing = 1;*/
 
                 }
-                if (tex)
-                {
+                if (tex) {
                     //__instance.mainCam.targetTexture = tex;
                 }
 
@@ -241,11 +202,9 @@ namespace EyeOfProvidence
                 //Graphics.Blit(texst, tex);
                 //Graphics.Blit(texst, tex);
                 bool flag = __instance.width != __instance.lastWidth || __instance.height != __instance.lastHeight;
-                if (reinitTex || flag)
-                {
+                if (reinitTex || flag) {
                     //Debug.LogError("Ohio perplexed");
-                    tex = new RenderTexture(__instance.width, __instance.height, 0, RenderTextureFormat.ARGB32)
-                    {
+                    tex = new RenderTexture(__instance.width, __instance.height, 0, RenderTextureFormat.ARGB32) {
                         name = "Xx_TrollLegion_xX",
                         antiAliasing = 1,
                         filterMode = FilterMode.Point

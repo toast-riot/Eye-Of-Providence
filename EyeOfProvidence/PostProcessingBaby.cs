@@ -1,14 +1,12 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace EyeOfProvidence
-{
-    public class PostProssesingBaby : MonoBehaviour
-    {
+namespace EyeOfProvidence {
+    public class PostProssesingBaby : MonoBehaviour {
         public static float PlayerFOV = 360;
         public static PerspectiveMode Perspective = PerspectiveMode.Equirectangular;
         public static float Quality = 9;
-        
+
         public static bool Debug = false;
         public static bool Grid = false;
         public static float GridOpac = 0;
@@ -19,8 +17,7 @@ namespace EyeOfProvidence
         public static float StereoFactor = 0;
         public static float FisheyeFit = 0;
         public static float PaniniFactor = 1;
-        enum CameraFace : int
-        {
+        enum CameraFace : int {
             Front = 0,
             Back = 1,
             Left = 2,
@@ -54,8 +51,7 @@ namespace EyeOfProvidence
         float prevWidth = 0;
         float prevHeight = 0;
         public FilterMode filterMode = FilterMode.Point;
-        private void Start()
-        {
+        private void Start() {
             mainCam = GetComponent<Camera>();
             mainCam.depthTextureMode = mainCam.depthTextureMode | DepthTextureMode.DepthNormals;
 
@@ -90,73 +86,61 @@ namespace EyeOfProvidence
 
             RefreshRenderTextures();
         }
-        private void Update()
-        {
-            if (PlayerFOV != fov)
-            {
+        private void Update() {
+            if (PlayerFOV != fov) {
                 fov = PlayerFOV;
                 postEffectMaterial.SetFloat("_FOV", fov);
             }
             quality = Quality;
-            if (quality != prevQuality)
-            {
+            if (quality != prevQuality) {
                 quality = Mathf.Clamp(quality, 0, 10);
                 prevQuality = quality;
                 qualityPixel = (int)Mathf.Pow(2, quality);
                 //Debug.Log("fefef");
                 RefreshRenderTextures();
             }
-            
-            if (debugMode != Debug)
-            {
+
+            if (debugMode != Debug) {
                 debugMode = Debug;
                 postEffectMaterial.SetFloat("_DEBUG", debugMode ? 1 : 0);
             }
 
-            if (gridMode != Grid)
-            {
+            if (gridMode != Grid) {
                 gridMode = Grid;
                 postEffectMaterial.SetFloat("_GRID", gridMode ? 1 : 0);
             }
 
-            if (gridOpac != GridOpac)
-            {
+            if (gridOpac != GridOpac) {
                 gridOpac = GridOpac;
                 postEffectMaterial.SetFloat("_GRID_FACTOR", gridOpac);
             }
 
-            if (mapMode != Map)
-            {
+            if (mapMode != Map) {
                 mapMode = Map;
                 postEffectMaterial.SetFloat("_MAP", mapMode ? 1 : 0);
             }
 
-            if (mapOpac != MapOpac)
-            {
+            if (mapOpac != MapOpac) {
                 mapOpac = MapOpac;
                 postEffectMaterial.SetFloat("_MAP_FACTOR", mapOpac);
             }
 
-            if (stereoFactor != StereoFactor)
-            {
+            if (stereoFactor != StereoFactor) {
                 stereoFactor = StereoFactor;
                 postEffectMaterial.SetFloat("_FISHEYE_STEREO_FACTOR", stereoFactor);
             }
 
-            if (FisheyeFit != fisheyeFit)
-            {
+            if (FisheyeFit != fisheyeFit) {
                 fisheyeFit = FisheyeFit;
                 postEffectMaterial.SetFloat("_FISHEYE_FIT", fisheyeFit);
             }
 
-            if (paniniFactor != PaniniFactor)
-            {
+            if (paniniFactor != PaniniFactor) {
                 paniniFactor = PaniniFactor;
                 postEffectMaterial.SetFloat("_PANINI_FACTOR", paniniFactor);
             }
 
-            if (stretch != Stretch)
-            {
+            if (stretch != Stretch) {
                 stretch = Stretch;
                 width = Screen.width;
                 height = Screen.height;
@@ -167,43 +151,34 @@ namespace EyeOfProvidence
                 prevHeight = height;
             }
 
-            if (mode != (int)Perspective)
-            {
+            if (mode != (int)Perspective) {
                 mode = (int)Perspective;
                 postEffectMaterial.SetFloat("_MODE", mode);
                 width = Screen.width;
                 height = Screen.height;
                 prevWidth = width;
                 prevHeight = height;
-                if (mode == (int)PerspectiveMode.Panini)
-                {
-                    if (cams[(int)CameraFace.Back] != null)
-                    {
+                if (mode == (int)PerspectiveMode.Panini) {
+                    if (cams[(int)CameraFace.Back] != null) {
                         cams[(int)CameraFace.Back].gameObject.SetActive(false);
                     }
-                } else
-                {
-                    if (cams[(int)CameraFace.Back] != null)
-                    {
+                }
+                else {
+                    if (cams[(int)CameraFace.Back] != null) {
                         cams[(int)CameraFace.Back].gameObject.SetActive(true);
                     }
                 }
                 RefreshRenderTextures();
             }
-            
+
         }
-        public void RefreshFOV()
-        {
-            
+        public void RefreshFOV() {
+
         }
-        public void RefreshRenderTextures()
-        {
-            for (int i = 0; i < cams.Length; i++)
-            {
-                if (cams[i])
-                {
-                    if (cams[i].targetTexture != null)
-                    {
+        public void RefreshRenderTextures() {
+            for (int i = 0; i < cams.Length; i++) {
+                if (cams[i]) {
+                    if (cams[i].targetTexture != null) {
                         cams[i].targetTexture.Release();
                     }
                     RenderTexture rendTex = new RenderTexture(qualityPixel, qualityPixel, 24);
@@ -212,8 +187,7 @@ namespace EyeOfProvidence
                 }
             }
         }
-        void OnRenderImage(RenderTexture src, RenderTexture dest)
-        {
+        void OnRenderImage(RenderTexture src, RenderTexture dest) {
             /*if (postEffectMaterial == null)
             {
                 postEffectMaterial = new Material(postShader);
