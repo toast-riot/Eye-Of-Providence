@@ -9,15 +9,15 @@ namespace EyeOfProvidence {
     [BepInDependency(PluginConfiguratorController.PLUGIN_GUID)]
     public class Plugin : BaseUnityPlugin {
 
-        /*public static TrashCan<GameObject> spawner { get; private set; } = new TrashCan<GameObject>("block_main");
-        public static UKAsset<GameObject> UK_Boom { get; private set; } = new UKAsset<GameObject>("Assets/Prefabs/Attacks and Projectiles/Coin.prefab");
-        public static AssetBundle UK_Prefabs;*/
+        // public static TrashCan<GameObject> spawner { get; private set; } = new TrashCan<GameObject>("block_main");
+        // public static UKAsset<GameObject> UK_Boom { get; private set; } = new UKAsset<GameObject>("Assets/Prefabs/Attacks and Projectiles/Coin.prefab");
+        // public static AssetBundle UK_Prefabs;
         Harmony harmony = new Harmony(PluginInfo.GUID);
         AssetBundle bundle;
         GameObject globePref;
         Camera[] cams = new Camera[6]; // 1-Front 2-Back 3-Left 4-Right 5-Up 6-Down
         static GameObject globe;
-        public static PostProssesingBaby post;
+        public static PostProcessing post;
         Material mat;
         RenderBuffer[] chumBuckets = new RenderBuffer[3];
         static RenderTexture tex;
@@ -35,7 +35,7 @@ namespace EyeOfProvidence {
             globePref = AssetHandler.LoadAsset<GameObject>("GlobeCam");
             mat = AssetHandler.LoadAsset<Material>("coolMat");
             //texst = AssetHandler.LoadAsset<Texture>("Gun Color Small");
-            harmony.PatchAll(typeof(XboxGamePass));
+            harmony.PatchAll(typeof(PPManager));
             ConfigManager.Setup();
         }
 
@@ -56,7 +56,6 @@ namespace EyeOfProvidence {
                 ClearGlobe();
             }
 
-
             if (globe) {
                 globe.transform.position = CameraController.Instance.gameObject.transform.position;
                 globe.transform.rotation = CameraController.Instance.gameObject.transform.rotation;
@@ -71,7 +70,7 @@ namespace EyeOfProvidence {
 
         public void SetupGlobe() {
             //Debug.LogError("Initializing Globe");
-            XboxGamePass.reinitTex = true;
+            PPManager.reinitTex = true;
             PostProcessV2_Handler.Instance.reinitializeTextures = true;
             PostProcessV2_Handler.Instance.SetupRTs();
 
@@ -84,7 +83,7 @@ namespace EyeOfProvidence {
             }
             //post = CameraController.Instance.gameObject.AddComponent<PostProssesingBaby>();
             //post.mainCam = cams[0];//CameraController.Instance.cam.transform.Find("HUD Camera").GetComponent<Camera>();
-            post = CameraController.Instance.cam.transform.gameObject.AddComponent<PostProssesingBaby>();
+            post = CameraController.Instance.cam.transform.gameObject.AddComponent<PostProcessing>();
             //post = CameraController.Instance.hudCamera.gameObject.AddComponent<PostProssesingBaby>();
             post.mainCam = post.GetComponent<Camera>();
             //tempTex = post.mainCam.targetTexture;
@@ -98,11 +97,8 @@ namespace EyeOfProvidence {
 
         public void ClearGlobe() {
             //Debug.LogError("Clearing Globe");
-            if (globe) {
-                GameObject.Destroy(globe);
-            }
+            if (globe) GameObject.Destroy(globe);
             globe = null;
-
 
             for (int i = 0; i < cams.Length; i++) {
                 cams[i] = null;
@@ -111,99 +107,83 @@ namespace EyeOfProvidence {
             post.mainCam.targetTexture = PostProcessV2_Handler.Instance.mainTex;
 
             //post.mainCam.targetTexture = null;
-            XboxGamePass.reinitTex = false;
+            PPManager.reinitTex = false;
             PostProcessV2_Handler.Instance.reinitializeTextures = true;
             PostProcessV2_Handler.Instance.SetupRTs();
 
-            if (CameraController.Instance.gameObject.TryGetComponent<PostProssesingBaby>(out PostProssesingBaby bab)) {
+            if (CameraController.Instance.gameObject.TryGetComponent<PostProcessing>(out PostProcessing bab)) {
                 GameObject.Destroy(bab);
             }
         }
 
 
         [HarmonyPatch]
-        public static class XboxGamePass {
+        public static class PPManager {
             public static bool reinitTex = UltraFOV;
 
-            [HarmonyPostfix]
-            [HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.OnPreRenderCallback))]
+            [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.OnPreRenderCallback))]
             public static void FUUUUUUUU(PostProcessV2_Handler __instance) {
-
             }
 
-            [HarmonyPostfix]
-            [HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.HeatWaves))]
+            [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.HeatWaves))]
             public static void skinitsundermyskinoffpeelitoffskinoffpeeloffskin(PostProcessV2_Handler __instance) {
-                // I know what needs to be done. Materials like heatwave, blood, etc. use the player camera matrix as a global parameter
+                // Materials like heatwave, blood, etc. use the player camera matrix as a global parameter
                 // So if I want to properly render the scene, I would need to constantly cycle the global matrix between the six cameras and cordinate that every frame
-                // It seems doable* with command buffers, but I'll leave it for future me to solve.
-                // Also performance will most likely be abysmal but that's just the life of a family guy
-
-
+                // It seems doable with command buffers
+                // performance will most likely be abysmal
             }
-            [HarmonyPostfix]
-            [HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.ReleaseTextures))]
+
+            [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.ReleaseTextures))]
             public static void DisbandTrollLegion(PostProcessV2_Handler __instance) {
                 if (tex) {
                     tex.Release();
-                }
-                if (tex) {
                     UnityEngine.Object.Destroy(tex);
                 }
                 tex = null;
             }
-            [HarmonyPostfix]
-            [HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.ChangeCamera))]
+
+            [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.ChangeCamera))]
             public static void remember(PostProcessV2_Handler __instance) {
-                if (UltraFOV) {
-                    //Debug.LogError("*burps covertly*");
-                    reinitTex = true;
-                }
+                if (UltraFOV) reinitTex = true;
             }
 
-            [HarmonyPostfix]
-            [HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.SetupRTs))]
+            [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.SetupRTs))]
             public static void rage(PostProcessV2_Handler __instance) {
                 //return;
-                /*if (Plugin.tex)
-                {
-                    __instance.hudCam.SetTargetBuffers(Plugin.tex.colorBuffer, Plugin.tex.depthBuffer);
-                    __instance.postProcessV2_VSRM.SetTexture("_MainTex", texst);
-                }*/
+                // if (Plugin.tex) {
+                //     __instance.hudCam.SetTargetBuffers(Plugin.tex.colorBuffer, Plugin.tex.depthBuffer);
+                //     __instance.postProcessV2_VSRM.SetTexture("_MainTex", texst);
+                // }
                 //tex = (RenderTexture)texst;
                 if (!tex) {
-                    /*tex = new RenderTexture(__instance.width, __instance.height, 0, RenderTextureFormat.ARGB32)
-                    {
-                        name = "Main",
-                        antiAliasing = 1,
-                        filterMode = FilterMode.Point
-                    };*/
+                    // tex = new RenderTexture(__instance.width, __instance.height, 0, RenderTextureFormat.ARGB32) {
+                    //     name = "Main",
+                    //     antiAliasing = 1,
+                    //     filterMode = FilterMode.Point
+                    // };
                     //tex = (RenderTexture)texst;
-                    /*tex = (RenderTexture)texst;
-                    tex.depth = 0;
-                    tex.format = RenderTextureFormat.ARGB32;
-                    tex.filterMode = FilterMode.Point;
-                    tex.antiAliasing = 1;*/
-
+                    // tex = (RenderTexture)texst;
+                    // tex.depth = 0;
+                    // tex.format = RenderTextureFormat.ARGB32;
+                    // tex.filterMode = FilterMode.Point;
+                    // tex.antiAliasing = 1;
                 }
                 if (tex) {
                     //__instance.mainCam.targetTexture = tex;
                 }
 
-                //Debug.LogError("fef");
-                /*__instance.buffers[0] = __instance.mainTex.colorBuffer;
-                __instance.buffers[1] = __instance.reusableBufferA.colorBuffer;
-                __instance.buffers[2] = __instance.viewNormal.colorBuffer;
-                __instance.mainCam.SetTargetBuffers(__instance.buffers, __instance.depthBuffer.depthBuffer);
-                __instance.mainCam.RemoveCommandBuffers(CameraEvent.AfterForwardAlpha);
-                __instance.SetupOutlines(false);
-                __instance.hudCam.SetTargetBuffers(__instance.mainTex.colorBuffer, __instance.depthBuffer.depthBuffer);*/
+                // __instance.buffers[0] = __instance.mainTex.colorBuffer;
+                // __instance.buffers[1] = __instance.reusableBufferA.colorBuffer;
+                // __instance.buffers[2] = __instance.viewNormal.colorBuffer;
+                // __instance.mainCam.SetTargetBuffers(__instance.buffers, __instance.depthBuffer.depthBuffer);
+                // __instance.mainCam.RemoveCommandBuffers(CameraEvent.AfterForwardAlpha);
+                // __instance.SetupOutlines(false);
+                // __instance.hudCam.SetTargetBuffers(__instance.mainTex.colorBuffer, __instance.depthBuffer.depthBuffer);
 
                 //Graphics.Blit(texst, tex);
                 //Graphics.Blit(texst, tex);
                 bool flag = __instance.width != __instance.lastWidth || __instance.height != __instance.lastHeight;
                 if (reinitTex || flag) {
-                    //Debug.LogError("Ohio perplexed");
                     tex = new RenderTexture(__instance.width, __instance.height, 0, RenderTextureFormat.ARGB32) {
                         name = "Xx_TrollLegion_xX",
                         antiAliasing = 1,
@@ -227,11 +207,10 @@ namespace EyeOfProvidence {
                     reinitTex = false;
                 }
 
-                /*__instance.mainCam.SetTargetBuffers(Plugin.tex.colorBuffer, Plugin.tex.depthBuffer);
-                //__instance.mainCam.RemoveCommandBuffers(CameraEvent.AfterForwardAlpha);
-                __instance.hudCam.SetTargetBuffers(Plugin.tex.colorBuffer, Plugin.tex.depthBuffer);
-                __instance.postProcessV2_VSRM.SetTexture("_MainTex", tex);*/
-
+                // __instance.mainCam.SetTargetBuffers(Plugin.tex.colorBuffer, Plugin.tex.depthBuffer);
+                // //__instance.mainCam.RemoveCommandBuffers(CameraEvent.AfterForwardAlpha);
+                // __instance.hudCam.SetTargetBuffers(Plugin.tex.colorBuffer, Plugin.tex.depthBuffer);
+                // __instance.postProcessV2_VSRM.SetTexture("_MainTex", tex);
             }
         }
     }

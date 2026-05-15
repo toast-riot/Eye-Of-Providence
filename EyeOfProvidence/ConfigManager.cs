@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using FloatField = PluginConfig.API.Fields.FloatField;
 
 namespace EyeOfProvidence {
     public enum PerspectiveMode {
@@ -29,7 +28,6 @@ namespace EyeOfProvidence {
         public static FloatSliderField PaniniFactor;
 
         public static FloatField Quality;
-        // Real ones remember UltraFOV
         public static KeyCodeField UltraFOVBind;
         //public static BoolField Debug;
         //public static KeyCodeField DebugBind;
@@ -144,17 +142,17 @@ namespace EyeOfProvidence {
         public static void UpdateValeus() {
             Plugin.UltraFOV = UltraFOV.value;
             //PostProssesingBaby.Debug = Debug.value;
-            PostProssesingBaby.Grid = Grid.value;
-            PostProssesingBaby.GridOpac = GridOpac.value;
-            PostProssesingBaby.Map = Map.value;
-            PostProssesingBaby.MapOpac = MapOpac.value;
-            PostProssesingBaby.PlayerFOV = PlayerFOV.value;
-            PostProssesingBaby.Perspective = Perspective.value;
-            PostProssesingBaby.Quality = Quality.value;
-            PostProssesingBaby.FisheyeFit = FisheyeFit.value;
-            PostProssesingBaby.Stretch = Stretch.value;
-            PostProssesingBaby.StereoFactor = StereoFactor.value;
-            PostProssesingBaby.PaniniFactor = PaniniFactor.value;
+            PostProcessing.Grid = Grid.value;
+            PostProcessing.GridOpac = GridOpac.value;
+            PostProcessing.Map = Map.value;
+            PostProcessing.MapOpac = MapOpac.value;
+            PostProcessing.PlayerFOV = PlayerFOV.value;
+            PostProcessing.Perspective = Perspective.value;
+            PostProcessing.Quality = Quality.value;
+            PostProcessing.FisheyeFit = FisheyeFit.value;
+            PostProcessing.Stretch = Stretch.value;
+            PostProcessing.StereoFactor = StereoFactor.value;
+            PostProcessing.PaniniFactor = PaniniFactor.value;
 
             for (int i = 0; i < configs.Count(); i++) {
                 if (configs[i].guid != "bool.ultrafov") {
