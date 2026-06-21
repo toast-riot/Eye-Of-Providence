@@ -121,17 +121,22 @@ namespace EyeOfProvidence {
         public static class PPManager {
             public static bool reinitTex = UltraFOV;
 
-            [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.OnPreRenderCallback))]
-            public static void FUUUUUUUU(PostProcessV2_Handler __instance) {
-            }
+            // [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.OnPreRenderCallback))]
+            // public static void FUUUUUUUU(PostProcessV2_Handler __instance) {
+            // }
 
-            [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.HeatWaves))]
-            public static void skinitsundermyskinoffpeelitoffskinoffpeeloffskin(PostProcessV2_Handler __instance) {
-                // Materials like heatwave, blood, etc. use the player camera matrix as a global parameter
-                // So if I want to properly render the scene, I would need to constantly cycle the global matrix between the six cameras and cordinate that every frame
-                // It seems doable with command buffers
-                // performance will most likely be abysmal
-            }
+            // [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.HeatWaves))]
+            // public static void skinitsundermyskinoffpeelitoffskinoffpeeloffskin(PostProcessV2_Handler __instance) {
+            //     // Materials like heatwave, blood, etc. use the player camera matrix as a global parameter
+            //     // So if I want to properly render the scene, I would need to constantly cycle the global matrix between the six cameras and cordinate that every frame
+            //     // It seems doable with command buffers
+            //     // performance will most likely be abysmal
+            // }
+
+            // [HarmonyPostfix, HarmonyPatch(typeof(CameraController), nameof(CameraController.FixedUpdate))]
+            // public static void UpdateCameraFOV(CameraController __instance) {
+
+            // }
 
             [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.ReleaseTextures))]
             public static void DisbandTrollLegion(PostProcessV2_Handler __instance) {
