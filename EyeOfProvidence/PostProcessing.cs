@@ -88,10 +88,25 @@ public class PostProcessing : MonoBehaviour {
         RefreshRenderTextures();
     }
     private void Update() {
-        if (PlayerFOV != fov) {
-            fov = PlayerFOV;
-            postEffectMaterial.SetFloat("_FOV", fov);
+        // if (CurrentFOV != fov) {
+        //     UnityEngine.Debug.LogWarning("FOV changed from " + fov + " to " + CurrentFOV);
+        //     fov = CurrentFOV;
+        //     postEffectMaterial.SetFloat("_FOV", fov);
+        // }
+
+        float newFOV = PlayerFOV;
+
+        CameraController camController = CameraController.Instance;
+        if (camController) {
+            float ratio = camController.cam.fieldOfView / camController.defaultFov;
+            newFOV *= ratio;
+            UnityEngine.Debug.LogError("Updated FOV: " + newFOV + " (Ratio: " + ratio + ")");
+        } else {
+            UnityEngine.Debug.LogError("CameraController not found");
         }
+
+        postEffectMaterial.SetFloat("_FOV", newFOV);
+
         quality = Quality;
         if (quality != prevQuality) {
             quality = Mathf.Clamp(quality, 0, 10);
@@ -170,11 +185,8 @@ public class PostProcessing : MonoBehaviour {
             }
             RefreshRenderTextures();
         }
-
     }
-    public void RefreshFOV() {
 
-    }
     public void RefreshRenderTextures() {
         for (int i = 0; i < cams.Length; i++) {
             if (cams[i]) {
