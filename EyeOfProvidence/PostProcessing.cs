@@ -53,7 +53,6 @@ public class PostProcessing : MonoBehaviour {
             postEffectMaterial.SetFloat("_ASPECT", v ? 1 : ((float)Screen.width / (float)Screen.height));
         });
 
-        Settings.FisheyeFit.SetOnSettingChanged((v) => postEffectMaterial.SetFloat("_FISHEYE_FIT", v));
         Settings.StereoFactor.SetOnSettingChanged((v) => postEffectMaterial.SetFloat("_FISHEYE_STEREO_FACTOR", v));
         Settings.PaniniFactor.SetOnSettingChanged((v) => postEffectMaterial.SetFloat("_PANINI_FACTOR", v));
 
