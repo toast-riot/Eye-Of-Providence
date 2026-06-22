@@ -1,23 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using BepInExHelpers.Extensions;
 
 namespace EyeOfProvidence;
 
 public class PostProcessing : MonoBehaviour {
-    public static float PlayerFOV = 360;
-    public static PerspectiveMode Perspective = PerspectiveMode.Equirectangular;
-    public static float Quality = 9;
-
-    public static bool Debug = false;
-    public static bool Grid = false;
-    public static float GridOpac = 0;
-    public static bool Map = false;
-    public static float MapOpac = 0;
-    public static bool Stretch = true;
-
-    public static float StereoFactor = 0;
-    public static float FisheyeFit = 0;
-    public static float PaniniFactor = 1;
     enum CameraFace : int {
         Front = 0,
         Back = 1,
@@ -26,179 +13,76 @@ public class PostProcessing : MonoBehaviour {
         Up = 4,
         Down = 5
     };
+
+    static float FOV = 360;
+    static float Quality = 9;
+
     public Camera mainCam;
-    Shader postShader;
     public Material postEffectMaterial;
     public Camera[] cams;
     List<RenderTexture> camTexs = new();
-    public float quality = 9;
-    public bool debugMode = false;
-    public bool mapMode = false;
-    public float mapOpac = 0.5f;
-    public bool gridMode = false;
-    public float gridOpac = 0.5f;
-    public bool stretch = true;
-    public float fisheyeFit = 0;
-    public float stereoFactor = 0;
-    public float paniniFactor = 1;
-    public float fov = 360;
-    public int mode = 0;
-    float prevQuality;
-    int qualityPixel = 1;
-    public float aspect = 1;
-    public float prevAspect = 1;
-    float width = 2;
-    float height = 1;
-    float prevWidth = 0;
-    float prevHeight = 0;
-    public FilterMode filterMode = FilterMode.Point;
-    private void Start() {
+
+    readonly FilterMode filterMode = FilterMode.Point; // TODO: test static, maybe make it a setting?
+
+    // Shader postShader;
+
+    void Start() {
         mainCam = GetComponent<Camera>();
         mainCam.depthTextureMode = mainCam.depthTextureMode | DepthTextureMode.DepthNormals;
 
-        quality = Quality;
-        qualityPixel = (int)Mathf.Pow(2, quality);
-        prevQuality = quality;
+        Settings.Debug.SetOnSettingChanged((v) => postEffectMaterial.SetFloat("_DEBUG", v ? 1 : 0));
 
-        fov = PlayerFOV;
-        mode = (int)Perspective;
-        stretch = Stretch;
+        Settings.Grid.SetOnSettingChanged((v) => postEffectMaterial.SetFloat("_GRID", v ? 1 : 0));
+        Settings.GridOpacity.SetOnSettingChanged((v) => postEffectMaterial.SetFloat("_GRID_FACTOR", v));
 
-        debugMode = Debug;
-        gridOpac = GridOpac;
-        mapOpac = MapOpac;
+        Settings.FOV.SetOnSettingChanged((v) => {
+            FOV = v;
+            postEffectMaterial.SetFloat("_FOV", FOV);
+        });
+        Settings.Perspective.SetOnSettingChanged((v) => {
+            postEffectMaterial.SetFloat("_MODE", (int)v);
+            cams[(int)CameraFace.Back]?.gameObject.SetActive(v != Settings.PerspectiveMode.Panini);
+            RefreshRenderTextures();
+        });
+        Settings.Quality.SetOnSettingChanged((v) => {
+            Quality = Mathf.Clamp(v, 0, 10);
+            RefreshRenderTextures();
+        });
+        Settings.Stretch.SetOnSettingChanged((v) => {
+            postEffectMaterial.SetFloat("_STRETCH", v ? 1 : 0);
+            postEffectMaterial.SetFloat("_ASPECT", v ? 1 : ((float)Screen.width / (float)Screen.height));
+        });
 
-        fisheyeFit = FisheyeFit;
-        paniniFactor = PaniniFactor;
+        Settings.FisheyeFit.SetOnSettingChanged((v) => postEffectMaterial.SetFloat("_FISHEYE_FIT", v));
+        Settings.StereoFactor.SetOnSettingChanged((v) => postEffectMaterial.SetFloat("_FISHEYE_STEREO_FACTOR", v));
+        Settings.PaniniFactor.SetOnSettingChanged((v) => postEffectMaterial.SetFloat("_PANINI_FACTOR", v));
 
-        postEffectMaterial.SetFloat("_FOV", fov);
-        postEffectMaterial.SetFloat("_MODE", mode);
-        postEffectMaterial.SetFloat("_STRETCH", stretch ? 1f : 0);
-        postEffectMaterial.SetFloat("_ASPECT", !stretch ? ((float)Screen.width / (float)Screen.height) : 1f);
-        postEffectMaterial.SetFloat("_FISHEYE_STEREO_FACTOR", stereoFactor);
-        postEffectMaterial.SetFloat("_FISHEYE_FIT", fisheyeFit);
-        postEffectMaterial.SetFloat("_PANINI_FACTOR", paniniFactor);
-
-        postEffectMaterial.SetFloat("_DEBUG", debugMode ? 1 : 0);
-        postEffectMaterial.SetFloat("_GRID", gridMode ? 1 : 0);
-        postEffectMaterial.SetFloat("_MAP", mapMode ? 1 : 0);
-        postEffectMaterial.SetFloat("_GRID_FACTOR", gridOpac);
-        postEffectMaterial.SetFloat("_MAP_FACTOR", mapOpac);
-
-        RefreshRenderTextures();
+        RefreshRenderTextures(); // TODO: necessary?
     }
-    private void Update() {
-        // if (CurrentFOV != fov) {
-        //     UnityEngine.Debug.LogWarning("FOV changed from " + fov + " to " + CurrentFOV);
-        //     fov = CurrentFOV;
-        //     postEffectMaterial.SetFloat("_FOV", fov);
-        // }
 
-        float newFOV = PlayerFOV;
-
+    void Update() {
+        float newFOV = FOV;
         CameraController camController = CameraController.Instance;
         if (camController) {
             float ratio = camController.cam.fieldOfView / camController.defaultFov;
             newFOV *= ratio;
             UnityEngine.Debug.LogError("Updated FOV: " + newFOV + " (Ratio: " + ratio + ")");
-        } else {
-            UnityEngine.Debug.LogError("CameraController not found");
         }
-
         postEffectMaterial.SetFloat("_FOV", newFOV);
-
-        quality = Quality;
-        if (quality != prevQuality) {
-            quality = Mathf.Clamp(quality, 0, 10);
-            prevQuality = quality;
-            qualityPixel = (int)Mathf.Pow(2, quality);
-            RefreshRenderTextures();
-        }
-
-        if (debugMode != Debug) {
-            debugMode = Debug;
-            postEffectMaterial.SetFloat("_DEBUG", debugMode ? 1 : 0);
-        }
-
-        if (gridMode != Grid) {
-            gridMode = Grid;
-            postEffectMaterial.SetFloat("_GRID", gridMode ? 1 : 0);
-        }
-
-        if (gridOpac != GridOpac) {
-            gridOpac = GridOpac;
-            postEffectMaterial.SetFloat("_GRID_FACTOR", gridOpac);
-        }
-
-        if (mapMode != Map) {
-            mapMode = Map;
-            postEffectMaterial.SetFloat("_MAP", mapMode ? 1 : 0);
-        }
-
-        if (mapOpac != MapOpac) {
-            mapOpac = MapOpac;
-            postEffectMaterial.SetFloat("_MAP_FACTOR", mapOpac);
-        }
-
-        if (stereoFactor != StereoFactor) {
-            stereoFactor = StereoFactor;
-            postEffectMaterial.SetFloat("_FISHEYE_STEREO_FACTOR", stereoFactor);
-        }
-
-        if (FisheyeFit != fisheyeFit) {
-            fisheyeFit = FisheyeFit;
-            postEffectMaterial.SetFloat("_FISHEYE_FIT", fisheyeFit);
-        }
-
-        if (paniniFactor != PaniniFactor) {
-            paniniFactor = PaniniFactor;
-            postEffectMaterial.SetFloat("_PANINI_FACTOR", paniniFactor);
-        }
-
-        if (stretch != Stretch) {
-            stretch = Stretch;
-            width = Screen.width;
-            height = Screen.height;
-            aspect = stretch ? 1f : ((float)Screen.width / (float)Screen.height);
-            postEffectMaterial.SetFloat("_STRETCH", stretch ? 1f : 0);
-            postEffectMaterial.SetFloat("_ASPECT", aspect);
-            prevWidth = width;
-            prevHeight = height;
-        }
-
-        if (mode != (int)Perspective) {
-            mode = (int)Perspective;
-            postEffectMaterial.SetFloat("_MODE", mode);
-            width = Screen.width;
-            height = Screen.height;
-            prevWidth = width;
-            prevHeight = height;
-            if (mode == (int)PerspectiveMode.Panini) {
-                if (cams[(int)CameraFace.Back] != null) {
-                    cams[(int)CameraFace.Back].gameObject.SetActive(false);
-                }
-            }
-            else {
-                if (cams[(int)CameraFace.Back] != null) {
-                    cams[(int)CameraFace.Back].gameObject.SetActive(true);
-                }
-            }
-            RefreshRenderTextures();
-        }
     }
 
     public void RefreshRenderTextures() {
-        for (int i = 0; i < cams.Length; i++) {
-            if (cams[i]) {
-                if (cams[i].targetTexture != null) {
-                    cams[i].targetTexture.Release();
-                }
-                RenderTexture rendTex = new RenderTexture(qualityPixel, qualityPixel, 24);
-                rendTex.filterMode = filterMode;
-                cams[i].targetTexture = rendTex;
-            }
+        int qualityPixel = (int)Mathf.Pow(2, Quality);
+
+        foreach (Camera cam in cams) {
+            if (cam == null) continue;
+            cam.targetTexture?.Release();
+            RenderTexture rendTex = new(qualityPixel, qualityPixel, 24);
+            rendTex.filterMode = filterMode;
+            cam.targetTexture = rendTex;
         }
     }
+
     void OnRenderImage(RenderTexture src, RenderTexture dest) {
         // if (postEffectMaterial == null) {
         //     postEffectMaterial = new Material(postShader);

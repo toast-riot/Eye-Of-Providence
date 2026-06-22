@@ -1,18 +1,16 @@
 ﻿using UnityEngine;
 using BepInEx;
 using HarmonyLib;
-using PluginConfig;
 using UnityEngine.Rendering;
 
 namespace EyeOfProvidence {
     [BepInPlugin(PluginInfo.GUID, PluginInfo.Name, PluginInfo.Version)]
-    [BepInDependency(PluginConfiguratorController.PLUGIN_GUID)]
     public class Plugin : BaseUnityPlugin {
 
         // public static TrashCan<GameObject> spawner { get; private set; } = new TrashCan<GameObject>("block_main");
         // public static UKAsset<GameObject> UK_Boom { get; private set; } = new UKAsset<GameObject>("Assets/Prefabs/Attacks and Projectiles/Coin.prefab");
         // public static AssetBundle UK_Prefabs;
-        Harmony harmony = new Harmony(PluginInfo.GUID);
+        Harmony harmony = new(PluginInfo.GUID);
         AssetBundle bundle;
         GameObject globePref;
         Camera[] cams = new Camera[6]; // 1-Front 2-Back 3-Left 4-Right 5-Up 6-Down
@@ -24,7 +22,7 @@ namespace EyeOfProvidence {
         static RenderTexture tempTex;
         static RenderTexture tex2;
         static Texture texst;
-        public static bool UltraFOV = true;
+        public static bool Enabled => Settings.Enabled.Value;
         public CommandBuffer bloodOilCB;
         public void Awake() {
         }
@@ -36,11 +34,11 @@ namespace EyeOfProvidence {
             mat = AssetHandler.LoadAsset<Material>("coolMat");
             //texst = AssetHandler.LoadAsset<Texture>("Gun Color Small");
             harmony.PatchAll(typeof(PPManager));
-            ConfigManager.Setup();
+            Settings.Init(Config);
         }
 
         public void Update() {
-            if (UltraFOV) {
+            if (Enabled) {
                 //Debug.LogError(CameraController.Instance.cam.targetTexture.name);
                 if (CameraController.Instance?.cam) {
                     if (!globe) {
@@ -65,7 +63,6 @@ namespace EyeOfProvidence {
                     }
                 }
             }
-            ConfigManager.Update();
         }
 
         public void SetupGlobe() {
@@ -119,7 +116,7 @@ namespace EyeOfProvidence {
 
         [HarmonyPatch]
         public static class PPManager {
-            public static bool reinitTex = UltraFOV;
+            public static bool reinitTex = Enabled;
 
             // [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.OnPreRenderCallback))]
             // public static void FUUUUUUUU(PostProcessV2_Handler __instance) {
@@ -149,7 +146,7 @@ namespace EyeOfProvidence {
 
             [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.ChangeCamera))]
             public static void remember(PostProcessV2_Handler __instance) {
-                if (UltraFOV) reinitTex = true;
+                if (Enabled) reinitTex = true;
             }
 
             [HarmonyPostfix, HarmonyPatch(typeof(PostProcessV2_Handler), nameof(PostProcessV2_Handler.SetupRTs))]
