@@ -1,6 +1,5 @@
 using BepInEx.Configuration;
 using BepInExHelpers.Extensions;
-using BepInExHelpers;
 using UnityEngine;
 
 namespace EyeOfProvidence;
@@ -53,10 +52,4 @@ public static class Settings {
         PaniniFactor = config.BindInOrder(section, "Panini Intensity", 1f, "", new AcceptableValueRange<float>(0f, 1f), showRangeAsPercent: true);
         PaniniFactor.RoundToStep(0.01f);
 	}
-
-    [PluginUpdate]
-    public static void Update() {
-        if (Input.GetKeyDown(ToggleKey.Value)) Enabled.Value = !Enabled.Value;
-        if (Input.GetKeyDown(GridBind.Value)) Grid.Value = !Grid.Value;
-    }
 }

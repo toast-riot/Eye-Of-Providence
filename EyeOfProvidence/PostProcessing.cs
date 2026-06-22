@@ -4,7 +4,7 @@ using BepInExHelpers.Extensions;
 
 namespace EyeOfProvidence;
 
-public class PostProcessing : MonoBehaviour {
+class PostProcessing : MonoBehaviour {
     enum CameraFace : int {
         Front = 0,
         Back = 1,
