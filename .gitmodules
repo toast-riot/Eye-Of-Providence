@@ -1,0 +1,3 @@
+[submodule "EyeOfProvidence/src/BepInExHelpers"]
+	path = EyeOfProvidence/BepInExHelpers
+	url = https://github.com/toast-riot/bepinex-helpers
